@@ -1,0 +1,32 @@
+{
+  "name": "pbw-moon",
+  "version": "0.1.0",
+  "description": "Another implementation of protobufjs writer",
+  "scripts": {
+    "build": "rm -rf ./dist && rollup --config rollup.config.js",
+    "build:prod": "rm -rf ./dist && rollup --config rollup-prod.config.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "keywords": [
+    "protobufjs"
+  ],
+  "author": "hpp2334",
+  "license": "Apache-2.0",
+  "sideEffects": false,
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/assert": "^1.5.10",
+    "rollup": "^4.14.2",
+    "rollup-plugin-polyfill-node": "^0.13.0",
+    "rollup-plugin-unassert": "^0.6.0",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@protobufjs/base64": "^1.1.2",
+    "@protobufjs/float": "^1.0.2",
+    "@protobufjs/utf8": "^1.1.0",
+    "assert": "^2.1.0",
+    "long": "^5.2.3"
+  }
+}

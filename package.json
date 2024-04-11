@@ -1,0 +1,16 @@
+{
+  "name": "workspaces",
+  "version": "0.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "build:lib": "pnpm -F pbw-moon build",
+    "build:lib-prod": "pnpm -F pbw-moon build:prod",
+    "build:test-units": "pnpm -F pbw-moon-test-units build",
+    "build:test-proto": "pnpm -F pbw-moon-testing-protos build",
+    "build": "pnpm build:lib && pnpm build:test-proto && pnpm build:test-units",
+    "build:prod": "pnpm build:lib && pnpm build:test-proto && pnpm build:test-units",
+    "test:units": "pnpm -F pbw-moon-test-units test",
+    "test:conformance": "cd ./protobuf-conformance && make"
+  }
+}

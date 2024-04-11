@@ -1,0 +1,19 @@
+{
+  "name": "pbw-moon-testing-protos",
+  "version": "0.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "build": "rm -rf ./dist && mkdir ./dist && pbjs -t static-module -w es6 ./protos/*.proto -o ./dist/proto.js && pbts -o ./dist/proto.d.ts ./dist/proto.js"
+  },
+  "main": "./dist/proto.js",
+  "types": "./dist/proto.d.ts",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "long": "^5.2.3",
+    "protobufjs-cli": "^1.1.2"
+  },
+  "dependencies": {
+    "protobufjs": "^7.2.6"
+  }
+}

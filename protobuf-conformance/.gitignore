@@ -1,0 +1,5 @@
+**/node_modules
+.tmp
+
+/impl/protobuf.js/dist
+/impl/protobuf.js/gen

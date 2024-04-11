@@ -1,0 +1,50 @@
+package partialsketch;
+syntax = "proto3";
+
+message Frame {
+    string _class = 1;
+    bool constrainProportions = 2;
+    sfixed32 width = 3;
+    sfixed32 height = 4;
+    sfixed32 x = 5;
+    sfixed32 y = 6;
+}
+
+message Color {
+    string _class = 1;
+    float alpha = 2;
+    float red = 3;
+    float blue = 4;
+    float green = 5;
+}
+
+message Fill {
+    string _class = 1;
+    bool isEnabled = 2;
+    Color color = 3;
+}
+
+message Style {
+    string _class = 1;
+    repeated Fill fills = 2;
+}
+
+message Layer {
+    string do_objectID = 1;
+    string _class = 2;
+    int32 booleanOperation = 3;
+    Frame frame = 4;
+    bool isFlippedHorizontal = 5;
+    bool isFlippedVertical = 6;
+    bool isLocked = 7;
+    bool isVisible = 8;
+    bool layerListExpandedType = 9;
+    int32 resizingConstraint = 10;
+    int32 resizingType = 11;
+    double rotation = 12;
+    bool shouldBreakMaskChain = 13;
+    bool clippingMaskMode = 14;
+    bool hasClippingMask = 15;
+    Style style = 16;
+    repeated Layer layers = 17;
+}
