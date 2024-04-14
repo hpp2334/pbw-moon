@@ -12,7 +12,7 @@ loadScript('https://cdnjs.cloudflare.com/ajax/libs/benchmark/2.1.4/benchmark.min
 
 var padSize = 23;
 
-export function newSuite(name: string) {
+export function newSuite(name: string, log: (msg: string) => void) {
     var benches: any[] = [];
 
     const benchmark = (window as any).Benchmark.runInContext({ _, process });
@@ -22,24 +22,23 @@ export function newSuite(name: string) {
             benches.push(event.target);
         })
         .on("start", function () {
-            console.log("benchmarking " + name + " performance ..." + "\n\n");
+            log("benchmarking " + name + " performance ...");
         })
         .on("cycle", function (event: any) {
-            console.log(String(event.target) + "\n");
+            log(String(event.target));
         })
         .on("complete", function () {
             if (benches.length > 1) {
                 benches.sort(function (a, b) { return getHz(b) - getHz(a); });
                 var fastest = benches[0],
                     fastestHz = getHz(fastest);
-                console.log("\n" + pad(fastest.name, padSize) + " was " + "fastest" + "\n");
+                log(pad(fastest.name, padSize) + " was " + "fastest");
                 benches.slice(1).forEach(function (bench) {
                     var hz = getHz(bench);
                     var percent = 1 - hz / fastestHz;
-                    console.log(pad(bench.name, padSize) + " was " + (percent * 100).toFixed(1) + "% ops/sec slower (factor " + (fastestHz / hz).toFixed(1) + ")" + "\n");
+                    log(pad(bench.name, padSize) + " was " + (percent * 100).toFixed(1) + "% ops/sec slower (factor " + (fastestHz / hz).toFixed(1) + ")");
                 });
             }
-            console.log("\n");
         });
 }
 

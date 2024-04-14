@@ -35,14 +35,20 @@ export function createInitialByteVecIter(): ByteVecIter {
     }
 }
 
-const _InitialChunkCapcity = 2048 // 2KB
+const _InitialChunkCapacity = 2048 // 2KB
 const _InitialChunkPoolLimit = 4;
 // use a pool to avoid create initial chunk frequently
 const _InitialChunkPool: Uint8Array[] = []
 
+// use a chunk to avoid create chunk frequently when toBuffer
+const _ToBufferChunkCapacity = 16384; // 16KB
+const _ToBufferChunkByteLengthLimit = 4096; // 4KB
+let _ToBufferChunk = new Uint8Array(_ToBufferChunkCapacity)
+let _ToBufferOffset = 0
+
 function obtainInitialChunk(): Uint8Array {
     if (_InitialChunkPool.length === 0) {
-        return new Uint8Array(_InitialChunkCapcity)
+        return new Uint8Array(_InitialChunkCapacity)
     }
     return _InitialChunkPool.pop()!
 }
@@ -54,12 +60,23 @@ function freeInitialChunk(bytes: Uint8Array) {
     _InitialChunkPool.push(bytes)
 }
 
+function allocateToBuffer(len: number): Uint8Array {
+    if (len > _ToBufferChunkByteLengthLimit || len <= 0) {
+        return new Uint8Array(len)
+    }
+    if (_ToBufferOffset + len > _ToBufferChunkCapacity) {
+        _ToBufferChunk = new Uint8Array(_ToBufferChunkCapacity)
+        _ToBufferOffset = 0
+    }
+    return _ToBufferChunk.subarray(_ToBufferOffset, _ToBufferOffset + len)
+}
+
 export class ByteVec {
     private _buffers: Array<InternalArray> = [{ bytes: obtainInitialChunk(), len: 0 }]
     private _freeBuffers: Array<InternalArray> = []
     private _currentChunk: InternalArray = this._buffers[0]
     private _len = 0
-    private _nextCapacity = _InitialChunkCapcity * 2;
+    private _nextCapacity = _InitialChunkCapacity * 2;
 
     private _iter1: ByteVecIter = createInitialByteVecIter()
     private _iter2: ByteVecIter = createInitialByteVecIter()
@@ -145,7 +162,7 @@ export class ByteVec {
 
         assert(startBuffersIndex < this._buffers.length, `startBuffersIndex ${startBuffersIndex} invalid`)
 
-        const ret = new Uint8Array(len)
+        const ret = allocateToBuffer(len)
 
         const startArray = this._buffers[startBuffersIndex]
         ret.set(startArray.bytes.subarray(startOffset, startArray.len))
@@ -175,7 +192,7 @@ export class ByteVec {
             buffersIndex: 0,
             bufferLen: 0,
             len: 0,
-            nextCapacity: _InitialChunkCapcity * 2
+            nextCapacity: _InitialChunkCapacity * 2
         }
     }
 

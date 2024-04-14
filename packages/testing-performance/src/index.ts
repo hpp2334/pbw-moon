@@ -52,16 +52,25 @@ const setupBench = (scope: string, btn: HTMLButtonElement, textDiv: HTMLDivEleme
     container.append(textDiv)
 }
 
-const setupBenchmarkSuite = (btn: HTMLButtonElement) => {
+const setupBenchmarkSuite = (btn: HTMLButtonElement, textDiv: HTMLDivElement) => {
     btn.innerText = 'Benchmark Suite'
+    textDiv.innerText = 'Wait...'
     btn.addEventListener('click', async () => {
+        textDiv.innerText = ''
+
         const _benchMessagePayload = await fetch(benchPayloadUrl).then(resp => resp.text())
         const _partialSketchMessagePayload = await fetch(partialSketchPayloadUrl).then(resp => resp.blob()).then(blob => blob.arrayBuffer()).then(bytes => new Uint8Array(bytes))
 
         const benchMessagePayload = JSON.parse(_benchMessagePayload)
         const partialSketchMessagePayload = protos.partialsketch.Layer.decode(_partialSketchMessagePayload)
 
-        newSuite("encoding - bench")
+        const log = (msg: string) => {
+            const t = document.createElement('div')
+            t.innerText = msg
+            textDiv.append(t)
+        }
+
+        newSuite("encoding - bench", log)
             .add("[offical] protobuf.js (static)", function () {
                 protos.Test.encode(benchMessagePayload).finish();
             })
@@ -71,7 +80,7 @@ const setupBenchmarkSuite = (btn: HTMLButtonElement) => {
             .run();
 
 
-        newSuite("encoding - partialSketch")
+        newSuite("encoding - partialSketch", log)
             .add("[offical] protobuf.js (static)", function () {
                 protos.partialsketch.Layer.encode(partialSketchMessagePayload).finish();
             })
@@ -84,6 +93,7 @@ const setupBenchmarkSuite = (btn: HTMLButtonElement) => {
 
     const container = document.body
     container.append(btn)
+    container.append(textDiv)
 }
 
 const btnBenchOffical = document.createElement('button')
@@ -91,7 +101,8 @@ const textBenchOffical = document.createElement('div')
 const btnBenchCustom = document.createElement('button')
 const textBenchCustom = document.createElement('div')
 const btnBenchmarkSuite = document.createElement('button')
+const textBenchmarkSuite = document.createElement('div')
 
 setupBench('Offical', btnBenchOffical, textBenchOffical, benchOfficalImpl)
 setupBench('Custom', btnBenchCustom, textBenchCustom, benchCustomImpl)
-setupBenchmarkSuite(btnBenchmarkSuite)
+setupBenchmarkSuite(btnBenchmarkSuite, textBenchmarkSuite)

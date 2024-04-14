@@ -38,20 +38,20 @@ Protobuf has [conformance tests](https://github.com/protocolbuffers/protobuf/tre
 Benchmark
 ----
 
-Currently, on the browser, encoding small objects is slower than official writer, but encoding large objects (30 MB) is faster. Run `pnpm dev` in `testing-performance` package, and click "Benchmark Suite" to see the result.
+Currently, on the browser, encoding small objects has similar performance compared to official writer, but encoding large objects (30 MB) is faster. Run `pnpm dev` in `testing-performance` package, and click "Benchmark Suite" to see the result.
 
 ```log
 benchmarking encoding - bench performance ...
-[offical] protobuf.js (static) x 1,137,247 ops/sec ±3.15% (62 runs sampled)
-[pbw-moon] protobuf.js (static) x 903,454 ops/sec ±4.40% (60 runs sampled)
-[offical] protobuf.js (static) was fastest
-[pbw-moon] protobuf.js (static) was 21.5% ops/sec slower (factor 1.3)
+[offical] protobuf.js (static) x 1,242,859 ops/sec ±1.62% (65 runs sampled)
+[pbw-moon] protobuf.js (static) x 1,480,685 ops/sec ±0.36% (66 runs sampled)
+[pbw-moon] protobuf.js (static) was fastest
+[offical] protobuf.js (static) was 17.1% ops/sec slower (factor 1.2)
 
 benchmarking encoding - partialSketch performance ...
-[offical] protobuf.js (static) x 0.82 ops/sec ±5.02% (6 runs sampled)
-[pbw-moon] protobuf.js (static) x 3.48 ops/sec ±3.42% (13 runs sampled)
+[offical] protobuf.js (static) x 0.80 ops/sec ±9.45% (6 runs sampled)
+[pbw-moon] protobuf.js (static) x 3.51 ops/sec ±3.34% (13 runs sampled)
 [pbw-moon] protobuf.js (static) was fastest
-[offical] protobuf.js (static) was 76.7% ops/sec slower (factor 4.3)
+[offical] protobuf.js (static) was 78.6% ops/sec slower (factor 4.7)
 ```
 
 License
