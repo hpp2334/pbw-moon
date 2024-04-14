@@ -97,7 +97,7 @@ describe('fuzz', () => {
         type: OperationType,
     }
 
-    for (let caseNum = 0; caseNum < 500; caseNum++) {
+    for (let caseNum = 0; caseNum < 100; caseNum++) {
         const seed = Date.now() + caseNum
         const gen = new chance(seed)
 

@@ -14,21 +14,19 @@ jobs:
       - name: Build
         run: |
           pnpm install
-          npx playwright install-deps
-          pnpm exec playwright install
+          pnpx playwright install-deps
+          pnpx playwright install
           pnpm run build:prod
       - name: Run unit tests & Fuzz tests
-        run: pnpm run test
+        run: pnpm run test:units
         env:
           TEST_WEBKIT: 1
       - name: Run conformance tests
-        run: |
-          cd ./protobuf-conformance
-          make
+        run: pnpm run test:conformance
       - uses: actions/upload-artifact@master
         with:
           name: dist
-          path: ./packages/dist
+          path: ./packages/core/dist
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -48,6 +46,8 @@ jobs:
           path: dist
       - uses: ncipollo/release-action@v1
       - name: Publish package on NPM
-        run: npm publish
+        run: |
+          cd ./packages/core
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_PBW_MOON }}

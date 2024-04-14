@@ -9,7 +9,8 @@ cp -r ../../../packages/core/dist ./dist
 npm ci
 
 # generate code
-rm -rf gen/*
+rm -rf ./gen
+mkdir ./gen
 OUT_FILE=gen/protos_pb.js
 PROTO_DIR=../../proto
 node_modules/.bin/pbjs -t static-module -w wrapper.js --es6 -o $OUT_FILE \
