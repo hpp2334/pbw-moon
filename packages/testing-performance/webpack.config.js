@@ -13,6 +13,10 @@ const config = {
                 use: 'ts-loader',
                 exclude: /node_modules/,
             },
+            {
+                test: /\.raw$/,
+                type: 'asset/resource'
+            }
         ],
     },
     output: {

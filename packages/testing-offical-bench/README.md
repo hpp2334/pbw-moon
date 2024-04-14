@@ -1,1 +1,0 @@
-Fork from https://github.com/protobufjs/protobuf.js/tree/master/bench to benchmark

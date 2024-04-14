@@ -224,13 +224,6 @@ export class ByteVec {
                 left -= toMoveFoward;
             }
         }
-
-        // this.writeByteAtIter(toRbeginIter, fromRbeginIter._byte)
-        // for (let i = 0; i < len - 1; i++) {
-        //     this._backwardIter(fromRbeginIter)
-        //     this._backwardIter(toRbeginIter)
-        //     this.writeByteAtIter(toRbeginIter, fromRbeginIter._byte)
-        // }
     }
 
     public getIter(index: number, iter: ByteVecIter) {

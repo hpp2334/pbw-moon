@@ -45,35 +45,11 @@ importers:
         specifier: ^5.4.5
         version: 5.4.5
 
-  packages/testing-offical-bench:
-    devDependencies:
-      '@types/benchmark':
-        specifier: ^2.1.5
-        version: 2.1.5
-      '@types/node':
-        specifier: ^20.12.7
-        version: 20.12.7
+  packages/testing-performance:
+    dependencies:
       benchmark:
         specifier: ^2.1.4
         version: 2.1.4
-      chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
-      pbw-moon:
-        specifier: workspace:*
-        version: link:../core
-      pbw-moon-testing-protos:
-        specifier: workspace:*
-        version: link:../testing-protos
-      protobufjs:
-        specifier: ^7.2.6
-        version: 7.2.6
-      tsx:
-        specifier: ^4.7.2
-        version: 4.7.2
-
-  packages/testing-performance:
-    dependencies:
       chance:
         specifier: ^1.1.11
         version: 1.1.11
@@ -84,6 +60,9 @@ importers:
         specifier: workspace:*
         version: link:../testing-protos
     devDependencies:
+      '@types/benchmark':
+        specifier: ^2.1.5
+        version: 2.1.5
       '@types/chai':
         specifier: ^4.3.8
         version: 4.3.14
@@ -114,6 +93,27 @@ importers:
       webpack-dev-server:
         specifier: ^5.0.4
         version: 5.0.4(webpack@5.91.0)
+
+  packages/testing-prof:
+    devDependencies:
+      '@types/benchmark':
+        specifier: ^2.1.5
+        version: 2.1.5
+      '@types/node':
+        specifier: ^20.12.7
+        version: 20.12.7
+      pbw-moon:
+        specifier: workspace:*
+        version: link:../core
+      pbw-moon-testing-protos:
+        specifier: workspace:*
+        version: link:../testing-protos
+      protobufjs:
+        specifier: ^7.2.6
+        version: 7.2.6
+      tsx:
+        specifier: ^4.7.2
+        version: 4.7.2
 
   packages/testing-protos:
     dependencies:
@@ -1936,7 +1936,7 @@ packages:
     dependencies:
       lodash: 4.17.21
       platform: 1.3.6
-    dev: true
+    dev: false
 
   /binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
@@ -3771,7 +3771,6 @@ packages:
 
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
-    dev: true
 
   /log-update@4.0.0:
     resolution: {integrity: sha512-9fkkDevMefjg0mmzWFBW8YkFP91OrizzkW3diF7CpG+S2EYdy4+TVfGwz1zeF8x7hCx1ovSPTOE9Ngib74qqUg==}
@@ -4272,7 +4271,7 @@ packages:
 
   /platform@1.3.6:
     resolution: {integrity: sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==}
-    dev: true
+    dev: false
 
   /playwright-core@1.43.0:
     resolution: {integrity: sha512-iWFjyBUH97+pUFiyTqSLd8cDMMOS0r2ZYz2qEsPjH8/bX++sbIJT35MSwKnp1r/OQBAqC5XO99xFbJ9XClhf4w==}

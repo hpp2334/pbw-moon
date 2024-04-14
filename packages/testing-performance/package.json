@@ -18,11 +18,13 @@
     "ts-loader": "^9.5.1",
     "typescript": "^5.4.5",
     "webpack": "^5.91.0",
-    "webpack-dev-server": "^5.0.4"
+    "webpack-dev-server": "^5.0.4",
+    "@types/benchmark": "^2.1.5"
   },
   "dependencies": {
     "chance": "^1.1.11",
     "pbw-moon": "workspace:*",
-    "pbw-moon-testing-protos": "workspace:*"
+    "pbw-moon-testing-protos": "workspace:*",
+    "benchmark": "^2.1.4"
   }
 }

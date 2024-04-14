@@ -11,7 +11,6 @@
     "build": "pnpm build:lib && pnpm build:test-proto && pnpm build:test-units",
     "build:prod": "pnpm build:lib-prod && pnpm build:test-proto && pnpm build:test-units",
     "test:units": "pnpm -F pbw-moon-test-units test",
-    "test:conformance": "cd ./protobuf-conformance && make",
-    "benchmark": "pnpm -F pbw-moon-testing-offical-bench benchmark"
+    "test:conformance": "cd ./protobuf-conformance && make"
   }
 }
