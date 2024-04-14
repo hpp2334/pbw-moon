@@ -43,7 +43,7 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: dist
-          path: dist
+          path: ./packages/core/dist
       - uses: ncipollo/release-action@v1
       - name: Publish package on NPM
         run: |
