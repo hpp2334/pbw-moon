@@ -35,17 +35,36 @@ export function createInitialByteVecIter(): ByteVecIter {
     }
 }
 
+const _InitialChunkCapcity = 2048 // 2KB
+const _InitialChunkPoolLimit = 4;
+// use a pool to avoid create initial chunk frequently
+const _InitialChunkPool: Uint8Array[] = []
+
+function obtainInitialChunk(): Uint8Array {
+    if (_InitialChunkPool.length === 0) {
+        return new Uint8Array(_InitialChunkCapcity)
+    }
+    return _InitialChunkPool.pop()!
+}
+
+function freeInitialChunk(bytes: Uint8Array) {
+    if (_InitialChunkPool.length >= _InitialChunkPoolLimit) {
+        return;
+    }
+    _InitialChunkPool.push(bytes)
+}
+
 export class ByteVec {
-    private _buffers: Array<InternalArray> = [{ bytes: new Uint8Array(this._initVecCapcity), len: 0 }]
+    private _buffers: Array<InternalArray> = [{ bytes: obtainInitialChunk(), len: 0 }]
     private _freeBuffers: Array<InternalArray> = []
     private _currentChunk: InternalArray = this._buffers[0]
     private _len = 0
-    private _nextCapacity = this._initVecCapcity * 2;
+    private _nextCapacity = _InitialChunkCapcity * 2;
 
     private _iter1: ByteVecIter = createInitialByteVecIter()
     private _iter2: ByteVecIter = createInitialByteVecIter()
 
-    constructor(private _initVecCapcity: number) { }
+    constructor() { }
 
     public pushByte(value: number) {
         assert(this._buffers.length > 0, "unexpected empty buffers in 'pushByte'")
@@ -92,6 +111,8 @@ export class ByteVec {
 
     public toBufferAndClear(startIndex: number): Uint8Array {
         const ret = this.toBuffer(startIndex)
+        assert(this._buffers.length > 0, "unexpected empty buffers in 'toBufferAndClear'")
+        freeInitialChunk(this._buffers[0].bytes)
         this._buffers = []
         this._freeBuffers = []
         return ret
@@ -154,7 +175,7 @@ export class ByteVec {
             buffersIndex: 0,
             bufferLen: 0,
             len: 0,
-            nextCapacity: this._initVecCapcity * 2
+            nextCapacity: _InitialChunkCapcity * 2
         }
     }
 

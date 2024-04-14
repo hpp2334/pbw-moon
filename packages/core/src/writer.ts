@@ -7,7 +7,6 @@ import pbUtf8 from '@protobufjs/utf8'
 import { ByteVec, ByteVecIter, ByteVecSnapshot, IAllocated, createInitialByteVecIter } from "./byte-vec"
 import { IIntoLongBits, LongBits } from "./longbits"
 
-const InitialVecCapcity = 32
 const GUESS_VARINT_LEN_FOR_LDELIM = 1
 
 function _varint32Len(value: number) {
@@ -20,7 +19,7 @@ function _varint32Len(value: number) {
 }
 
 export class Writer {
-    private _vec: ByteVec = new ByteVec(InitialVecCapcity)
+    private _vec: ByteVec = new ByteVec()
     private _snapshots: ByteVecSnapshot[] = []
     private _emptySnapshot: ByteVecSnapshot
     private _vecAllocated: IAllocated = {
