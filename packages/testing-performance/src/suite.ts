@@ -1,9 +1,22 @@
-import benchmark from 'benchmark'
+import _ from 'lodash'
+import process from 'process'
+
+function loadScript(src: string) {
+    const script = document.createElement('script')
+    script.src = src
+    document.head.append(script)
+}
+
+// load benchmark.js
+loadScript('https://cdnjs.cloudflare.com/ajax/libs/benchmark/2.1.4/benchmark.min.js')
 
 var padSize = 23;
 
 export function newSuite(name: string) {
     var benches: any[] = [];
+
+    const benchmark = (window as any).Benchmark.runInContext({ _, process });
+
     return new benchmark.Suite(name)
         .on("add", function (event: any) {
             benches.push(event.target);

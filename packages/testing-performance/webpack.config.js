@@ -1,6 +1,7 @@
 
 const path = require("path");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 const config = {
     mode: "production",
@@ -26,7 +27,11 @@ const config = {
     resolve: {
         extensions: ['.ts', '.js', '.json'],
     },
-    plugins: [new HtmlWebpackPlugin()],
+    externals: {
+        benchmark: 'benchmark',
+    },
+    plugins: [new HtmlWebpackPlugin(),
+    new NodePolyfillPlugin()],
 };
 
 module.exports = config;
