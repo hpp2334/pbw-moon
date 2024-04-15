@@ -1,13 +1,16 @@
 import { expect, ByteVec, chance, ByteVecSnapshot } from "../dist"
 
 const defaultAllocated = {
-    bytes: new Uint8Array(),
-    len: 0
+    chunk: {
+        bytes: new Uint8Array(),
+        len: 0
+    }
 }
 
 function pushBytes(vec: ByteVec, bytes: Uint8Array) {
-    vec.allocate(bytes.byteLength, defaultAllocated);
-    defaultAllocated.bytes.set(bytes, defaultAllocated.len)
+    vec.reserveMore(bytes.byteLength, defaultAllocated);
+    defaultAllocated.chunk.bytes.set(bytes, defaultAllocated.chunk.len)
+    vec.addLen(bytes.byteLength)
 }
 
 if ((ByteVec as any)._setInitializeVecCapacity) {

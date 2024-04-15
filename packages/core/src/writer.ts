@@ -4,7 +4,7 @@ import { isString } from "./utils"
 import pbFloat from '@protobufjs/float'
 import pbBase64 from '@protobufjs/base64'
 import pbUtf8 from '@protobufjs/utf8'
-import { ByteVec, ByteVecIter, ByteVecSnapshot, AllocatedChunk, createInitialByteVecIter } from "./byte-vec"
+import { ByteVec, ByteVecIter, ByteVecSnapshot, AllocatedChunk, createInitialByteVecIter, AllocatedChunkRef } from "./byte-vec"
 import { IIntoLongBits, LongBits } from "./longbits"
 
 const GUESS_VARINT_LEN_FOR_LDELIM = 1
@@ -22,9 +22,11 @@ export class Writer {
     private _vec: ByteVec = new ByteVec()
     private _snapshots: ByteVecSnapshot[] = []
     private _emptySnapshot: ByteVecSnapshot
-    private _vecAllocated: AllocatedChunk = {
-        bytes: new Uint8Array([]),
-        len: 0,
+    private _vecAllocated: AllocatedChunkRef = {
+        chunk: {
+            bytes: new Uint8Array([]),
+            len: 0,
+        }
     }
     private _iter1: ByteVecIter = createInitialByteVecIter()
 
@@ -113,15 +115,17 @@ export class Writer {
 
     // Writes a float (32 bit).
     public float(value: number) {
-        this._vec.allocate(4, this._vecAllocated)
-        pbFloat.writeFloatLE(value, this._vecAllocated.bytes, this._vecAllocated.len)
+        this._vec.reserveMore(4, this._vecAllocated)
+        pbFloat.writeFloatLE(value, this._vecAllocated.chunk.bytes, this._vecAllocated.chunk.len)
+        this._vec.addLen(4)
         return this
     }
 
     // Writes a double (64 bit float).
     public double(value: number) {
-        this._vec.allocate(8, this._vecAllocated)
-        pbFloat.writeDoubleLE(value, this._vecAllocated.bytes, this._vecAllocated.len)
+        this._vec.reserveMore(8, this._vecAllocated)
+        pbFloat.writeDoubleLE(value, this._vecAllocated.chunk.bytes, this._vecAllocated.chunk.len)
+        this._vec.addLen(8)
         return this
     }
 
@@ -134,15 +138,17 @@ export class Writer {
         }
         if (isString(value)) {
             const len = pbBase64.length(value)
-            this._vec.allocate(len, this._vecAllocated)
             this.uint32(len)
-            pbBase64.decode(value, this._vecAllocated.bytes, this._vecAllocated.len)
+            this._vec.reserveMore(len, this._vecAllocated)
+            pbBase64.decode(value, this._vecAllocated.chunk.bytes, this._vecAllocated.chunk.len)
+            this._vec.addLen(len)
             return this
         }
         this.uint32(len)
-        this._vec.allocate(len, this._vecAllocated)
+        this._vec.reserveMore(len, this._vecAllocated)
         // copy bytes
-        this._vecAllocated.bytes.set(value, this._vecAllocated.len)
+        this._vecAllocated.chunk.bytes.set(value, this._vecAllocated.chunk.len)
+        this._vec.addLen(value.byteLength)
         return this
     }
 
@@ -153,8 +159,9 @@ export class Writer {
             this._writeByte(0)
         } else {
             this.uint32(len)
-            this._vec.allocate(len, this._vecAllocated)
-            pbUtf8.write(value, this._vecAllocated.bytes, this._vecAllocated.len)
+            this._vec.reserveMore(len, this._vecAllocated)
+            pbUtf8.write(value, this._vecAllocated.chunk.bytes, this._vecAllocated.chunk.len)
+            this._vec.addLen(len)
         }
         return this
     }
@@ -192,7 +199,9 @@ export class Writer {
         if (varint32Len !== GUESS_VARINT_LEN_FOR_LDELIM) {
             const maxLen = Math.max(snapshot.len + GUESS_VARINT_LEN_FOR_LDELIM, snapshot.len + varint32Len) + len
             if (maxLen > this._vec.len()) {
-                this._vec.allocate(maxLen - this._vec.len(), this._vecAllocated);
+                const left = maxLen - this._vec.len()
+                this._vec.reserveMore(left, this._vecAllocated);
+                this._vec.addLen(left)
             }
 
             this._vec.moveBackward(snapshot.len + GUESS_VARINT_LEN_FOR_LDELIM, snapshot.len + varint32Len, len)

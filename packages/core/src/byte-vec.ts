@@ -5,6 +5,10 @@ export interface AllocatedChunk {
     len: number
 }
 
+export interface AllocatedChunkRef {
+    chunk: AllocatedChunk
+}
+
 export interface ByteVecSnapshot {
     chunksIndex: number,
     chunkLen: number,
@@ -89,16 +93,18 @@ export class ByteVec {
         assert(this._currentChunk === this._chunks[this._chunks.length - 1], 'current chunk is not the last chunk');
     }
 
-    public allocate(len: number, allocated: AllocatedChunk): void {
+    public addLen(len: number) {
+        this._currentChunk.len += len
+        this._len += len
+    }
+
+    public reserveMore(len: number, allocated: AllocatedChunkRef): void {
         const currentChunkLeft = this._currentChunk.bytes.byteLength - this._currentChunk.len
 
         // If current chunk is enough, just allocate in it
         if (len <= currentChunkLeft) {
-            allocated.bytes = this._currentChunk.bytes;
-            allocated.len = this._currentChunk.len;
+            allocated.chunk = this._currentChunk;
 
-            this._currentChunk.len += len;
-            this._len += len;
             assert(this._currentChunk.len <= this._currentChunk.bytes.byteLength, `currentChunk byteLength is ${this._currentChunk.bytes.byteLength}, but required length is ${this._currentChunk.len}`)
             return;
         }
@@ -109,10 +115,7 @@ export class ByteVec {
         // now next chunk is enough, create it and allocate
         this._allocateNewChunk()
 
-        allocated.bytes = this._currentChunk.bytes;
-        allocated.len = this._currentChunk.len;
-        this._currentChunk.len += len;
-        this._len += len;
+        allocated.chunk = this._currentChunk;
         assert(this._currentChunk.len <= this._currentChunk.bytes.byteLength, `currentChunk byteLength is ${this._currentChunk.bytes.byteLength}, but required length is ${this._currentChunk.len}`)
         assert(this._currentChunk === this._chunks[this._chunks.length - 1], 'current chunk is not the last chunk')
     }
