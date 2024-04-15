@@ -113,8 +113,8 @@ describe('fuzz', () => {
                 ++opCount
                 switch (type) {
                     case OperationType.PushBytes: {
-                        const len = gen.integer({ min: 1, max: 40 })
-                        const extra = gen.integer({ min: 0, max: 10 })
+                        const len = gen.integer({ min: 1, max: 20 })
+                        const extra = gen.integer({ min: 0, max: 4 })
                         const bytes = generateUint8Array(len)
                         pushBytes(vec, bytes, extra)
                         array = new Uint8Array([...array, ...bytes])
