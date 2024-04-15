@@ -74,6 +74,7 @@ export class ByteVec {
     private _chunks: Array<AllocatedChunk> = [{ bytes: obtainInitialChunk(), len: 0 }]
     private _freeChunks: Array<AllocatedChunk> = []
     private _currentChunk: AllocatedChunk = this._chunks[0]
+    private _currentChunkLeft = this._currentChunk.bytes.byteLength
     private _len = 0
     private _nextCapacity = _InitialChunkCapacity * 2;
 
@@ -82,27 +83,15 @@ export class ByteVec {
 
     constructor() { }
 
-    public pushByte(value: number) {
-        assert(this._chunks.length > 0, "unexpected empty buffers in 'pushByte'")
-
-        if (this._currentChunk.len === this._currentChunk.bytes.byteLength) {
-            this._allocateNewChunk()
-        }
-        this._len++
-        this._currentChunk.bytes[this._currentChunk.len++] = value
-        assert(this._currentChunk === this._chunks[this._chunks.length - 1], 'current chunk is not the last chunk');
-    }
-
     public addLen(len: number) {
         this._currentChunk.len += len
         this._len += len
+        this._currentChunkLeft -= len
     }
 
     public reserveMore(len: number, allocated: AllocatedChunkRef): void {
-        const currentChunkLeft = this._currentChunk.bytes.byteLength - this._currentChunk.len
-
         // If current chunk is enough, just allocate in it
-        if (len <= currentChunkLeft) {
+        if (len <= this._currentChunkLeft) {
             allocated.chunk = this._currentChunk;
 
             assert(this._currentChunk.len <= this._currentChunk.bytes.byteLength, `currentChunk byteLength is ${this._currentChunk.bytes.byteLength}, but required length is ${this._currentChunk.len}`)
@@ -201,6 +190,7 @@ export class ByteVec {
         }
         this._currentChunk = this._chunks[this._chunks.length - 1]
         this._currentChunk.len = snapshot.chunkLen
+        this._currentChunkLeft = this._currentChunk.bytes.byteLength - snapshot.chunkLen
         this._len = snapshot.len
         this._nextCapacity = snapshot.nextCapacity
 
@@ -300,6 +290,7 @@ export class ByteVec {
                 chunk.len = 0
                 this._chunks.push(chunk)
                 this._currentChunk = chunk
+                this._currentChunkLeft = chunk.bytes.byteLength;
                 this._nextCapacity = 2 * this._nextCapacity;
                 return;
             }
@@ -311,6 +302,7 @@ export class ByteVec {
         }
         this._chunks.push(chunk)
         this._currentChunk = chunk
+        this._currentChunkLeft = chunk.bytes.byteLength;
         this._nextCapacity = 2 * this._nextCapacity;
     }
 }

@@ -227,11 +227,16 @@ export class Writer {
     }
 
     private _writeVarint32(val: number) {
+        this._vec.reserveMore(5, this._vecAllocated);
+        let count = 0
         while (val > 127) {
-            this._vec.pushByte(val & 127 | 128);
+            this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len + count] = val & 127 | 128;
+            count++;
             val >>>= 7;
         }
-        this._vec.pushByte(val);
+        this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len + count] = val;
+        count++;
+        this._vec.addLen(count)
     }
 
     private _writeVarint32ByAtIter(val: number, iter: ByteVecIter) {
@@ -244,26 +249,36 @@ export class Writer {
     }
 
     private _writeVarint64(val: LongBits) {
+        this._vec.reserveMore(10, this._vecAllocated);
+        let count = 0
         while (val.hi) {
-            this._vec.pushByte(val.lo & 127 | 128);
+            this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len + count] = val.lo & 127 | 128;
+            count++;
             val.lo = (val.lo >>> 7 | val.hi << 25) >>> 0;
             val.hi >>>= 7;
         }
         while (val.lo > 127) {
-            this._vec.pushByte(val.lo & 127 | 128);
+            this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len + count] = val.lo & 127 | 128;
+            count++;
             val.lo = val.lo >>> 7;
         }
-        this._vec.pushByte(val.lo);
+        this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len + count] = val.lo;
+        count++;
+        this._vec.addLen(count)
     }
 
     private _writeFixed32(val: number) {
-        this._vec.pushByte(val & 255);
-        this._vec.pushByte(val >>> 8 & 255);
-        this._vec.pushByte(val >>> 16 & 255);
-        this._vec.pushByte(val >>> 24);
+        this._vec.reserveMore(4, this._vecAllocated);
+        this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len] = val & 255;
+        this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len + 1] = val >>> 8 & 255;
+        this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len + 2] = val >>> 16 & 255;
+        this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len + 3] = val >>> 24;
+        this._vec.addLen(4)
     }
 
     private _writeByte(val: number) {
-        this._vec.pushByte(val)
+        this._vec.reserveMore(1, this._vecAllocated);
+        this._vecAllocated.chunk.bytes[this._vecAllocated.chunk.len] = val
+        this._vec.addLen(1)
     }
 }

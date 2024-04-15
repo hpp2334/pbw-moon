@@ -7,8 +7,9 @@ const defaultAllocated = {
     }
 }
 
-function pushBytes(vec: ByteVec, bytes: Uint8Array) {
-    vec.reserveMore(bytes.byteLength, defaultAllocated);
+function pushBytes(vec: ByteVec, bytes: Uint8Array, _extra?: number) {
+    const extra = _extra ?? 0
+    vec.reserveMore(bytes.byteLength + extra, defaultAllocated);
     defaultAllocated.chunk.bytes.set(bytes, defaultAllocated.chunk.len)
     vec.addLen(bytes.byteLength)
 }
@@ -27,30 +28,6 @@ describe('pushByte/pushBytes', () => {
     it('empty', async () => {
         const vec = new ByteVec()
         expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([]))
-    })
-
-    it('pushByte [1]', async () => {
-        const vec = new ByteVec()
-        vec.pushByte(1)
-        expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1]))
-    })
-
-    it('pushByte [1,2]', async () => {
-        const vec = new ByteVec()
-        vec.pushByte(1)
-        vec.pushByte(2)
-        expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1, 2]))
-    })
-
-    it('pushByte [1,2,3,4,5]', async () => {
-        const vec = new ByteVec()
-        vec.pushByte(1)
-        vec.pushByte(2)
-        vec.pushByte(3)
-        vec.pushByte(4)
-        vec.pushByte(5)
-        expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1, 2, 3, 4, 5]))
-        tryAssertVecChunksSize(vec, 2)
     })
 
     it('pushBytes [1]', async () => {
@@ -91,8 +68,7 @@ describe('snapshot', () => {
         const snapshot = vec.snapshot()
         expect(snapshot.len === 3)
         expect(snapshot.chunkLen === 3)
-        vec.pushByte(8)
-        vec.pushByte(6)
+        pushBytes(vec, new Uint8Array([8, 6]))
         vec.restoreSnapshot(snapshot)
         pushBytes(vec, new Uint8Array([4, 5]))
         expect(vec.toBuffer(1)).to.equalBytes(expected)
@@ -102,11 +78,10 @@ describe('snapshot', () => {
 
 describe('fuzz', () => {
     enum OperationType {
-        PushByte = 0,
-        PushBytes = 1,
-        MoveBackward = 2,
-        Snapshot = 3,
-        RestoreLastSnapshot = 4,
+        PushBytes = 0,
+        MoveBackward = 1,
+        Snapshot = 2,
+        RestoreLastSnapshot = 3,
     }
     interface Operation {
         type: OperationType,
@@ -125,7 +100,7 @@ describe('fuzz', () => {
         }
 
         const opsLen = gen.integer({ min: 10, max: 100 })
-        const ops: Array<Operation> = Array.from({ length: opsLen }).fill(0).map(_ => ({ type: gen.integer({ min: 0, max: 4 }) as OperationType }))
+        const ops: Array<Operation> = Array.from({ length: opsLen }).fill(0).map(_ => ({ type: gen.integer({ min: 0, max: 3 }) as OperationType }))
 
         it(`Bytevec FuzzTest [${seed}] ${caseNum + 1}`, async () => {
             const vec = new ByteVec()
@@ -137,16 +112,11 @@ describe('fuzz', () => {
             for (const { type } of ops) {
                 ++opCount
                 switch (type) {
-                    case OperationType.PushByte: {
-                        const value = gen.integer({ min: 0, max: 255 })
-                        vec.pushByte(value)
-                        array = new Uint8Array([...array, value])
-                        break;
-                    }
                     case OperationType.PushBytes: {
-                        const len = gen.integer({ min: 1, max: 20 })
+                        const len = gen.integer({ min: 1, max: 40 })
+                        const extra = gen.integer({ min: 0, max: 10 })
                         const bytes = generateUint8Array(len)
-                        pushBytes(vec, bytes)
+                        pushBytes(vec, bytes, extra)
                         array = new Uint8Array([...array, ...bytes])
                         break
                     }
