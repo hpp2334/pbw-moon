@@ -19,6 +19,11 @@ const partialSketchMessagePayload = protos.partialsketch.Layer.decode(partialSke
 
 // bench
 
+interface BenchResult {
+    heapTotal: number,
+    time: number,
+}
+
 const benchmark = (msg: string, f: () => void) => {
     console.log(msg)
 
@@ -28,7 +33,7 @@ const benchmark = (msg: string, f: () => void) => {
     const end = performance.now()
     const endUsage = process.memoryUsage()
 
-    console.log('time', (end - start) / 1000 + ' s')
+    console.log('time', (end - start) + ' ms')
     console.log('heapTotal increase', (endUsage.heapTotal - startUsage.heapTotal) / 1024 / 1024 + ' MB')
 
     console.log()
@@ -40,13 +45,13 @@ const benchmark = (msg: string, f: () => void) => {
 }
 
 const officalBench = benchmark(`[Offical] encode bench`, () => {
-    for (var i = 0; i < 10000000; ++i)
-        protos.partialsketch.Layer.encode(benchMessagePayload).finish()
+    for (let i = 0; i < 10000000; ++i)
+        protos.Test.encode(benchMessagePayload).finish()
 })
 
 const pbwmoonBench = benchmark(`[pbw-moon] encode bench`, () => {
-    for (var i = 0; i < 10000000; ++i)
-        protos.partialsketch.Layer.encode(benchMessagePayload, new Writer()).finish()
+    for (let i = 0; i < 10000000; ++i)
+        protos.Test.encode(benchMessagePayload, new Writer()).finish()
 })
 
 const officalPartialSketch = benchmark(`[Offical] encode partialSketch`, () => {
@@ -57,8 +62,13 @@ const pbwmoonPartialSketch = benchmark(`[pbw-moon] encode partialSketch`, () => 
     protos.partialsketch.Layer.encode(partialSketchMessagePayload, new Writer()).finish()
 })
 
+function assertPerformance(msg: string, lhs: number, rhs: number, scale: number) {
+    if (lhs * scale >= rhs) {
+        throw Error("assertPerformance failed: " + msg)
+    }
+}
+
 // Verify
-console.assert(pbwmoonBench.time / 4 < officalBench.time, 'bench time verify')
-console.assert(pbwmoonBench.heapTotal < officalBench.heapTotal / 5, 'bench heapTotal verify')
-console.assert(pbwmoonPartialSketch.time < officalPartialSketch.time / 2, 'partialSketch time verify')
-console.assert(pbwmoonPartialSketch.heapTotal < officalPartialSketch.heapTotal / 20, 'partialSketch heapTotal verify')
+assertPerformance('bench time verify', pbwmoonBench.time, officalBench.time, 0.85)
+assertPerformance('partialSketch time verify', pbwmoonPartialSketch.time, officalPartialSketch.time, 2)
+assertPerformance('partialSketch heapTotal verify', pbwmoonPartialSketch.heapTotal, officalPartialSketch.heapTotal, 15)

@@ -42,20 +42,20 @@ Currently, encoding small objects is slower than the official writer (in Node.js
 
 ```log
 [Offical] encode bench
-time 0.519778804987669 s
-heapTotal increase 10.75 MB
+time 8552.496789008379 ms
+heapTotal increase 10.5 MB
 
 [pbw-moon] encode bench
-time 1.882222745001316 s
+time 9201.273878991604 ms
 heapTotal increase 0 MB
 
 [Offical] encode partialSketch
-time 0.9394721720218658 s
-heapTotal increase 318.75 MB
+time 931.2965700030327 ms
+heapTotal increase 316 MB
 
 [pbw-moon] encode partialSketch
-time 0.30044887098670003 s
-heapTotal increase 8.25 MB
+time 268.0517299771309 ms
+heapTotal increase 11 MB
 ```
 
 License
