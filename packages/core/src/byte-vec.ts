@@ -32,6 +32,8 @@ export function createInitialByteVecIter(): ByteVecIter {
     }
 }
 
+const EMPTY_ARRAY: any[] = []
+
 let _InitialChunkCapacity = 2048 // 2KB
 const _InitialChunkPoolLimit = 4;
 // use a pool to avoid create initial chunk frequently
@@ -117,8 +119,8 @@ export class ByteVec {
         const ret = this.toBuffer(startIndex)
         assert(this._chunks.length > 0, "unexpected empty buffers in 'toBufferAndClear'")
         freeInitialChunk(this._chunks[0].bytes)
-        this._chunks = []
-        this._freeChunks = []
+        this._chunks = EMPTY_ARRAY
+        this._freeChunks = EMPTY_ARRAY
         return ret
     }
 
