@@ -11,6 +11,10 @@
   "keywords": [
     "protobufjs"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hpp2334/pbw-moon"
+  },
   "author": "hpp2334",
   "license": "Apache-2.0",
   "sideEffects": false,
@@ -20,13 +24,13 @@
     "rollup": "^4.14.2",
     "rollup-plugin-polyfill-node": "^0.13.0",
     "rollup-plugin-unassert": "^0.6.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "assert": "^2.1.0"
   },
   "dependencies": {
     "@protobufjs/base64": "^1.1.2",
     "@protobufjs/float": "^1.0.2",
     "@protobufjs/utf8": "^1.1.0",
-    "assert": "^2.1.0",
     "long": "^5.2.3"
   }
 }

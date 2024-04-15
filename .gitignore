@@ -1,5 +1,7 @@
 **/node_modules
 **/coverage
-/packages/**/dist
 *.log
 *.cpuprofile
+
+/packages/**/dist
+/packages/core/README.md

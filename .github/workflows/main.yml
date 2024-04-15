@@ -59,6 +59,7 @@ jobs:
       - uses: ncipollo/release-action@v1
       - name: Publish package on NPM
         run: |
+          pnpm prepare:publish
           cd ./packages/core
           npm publish
         env:
