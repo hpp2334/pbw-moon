@@ -2,80 +2,92 @@ import { expect, ByteVec, chance, ByteVecSnapshot } from "../dist"
 
 const defaultAllocated = {
     bytes: new Uint8Array(),
-    offset: 0
+    len: 0
 }
 
 function pushBytes(vec: ByteVec, bytes: Uint8Array) {
     vec.allocate(bytes.byteLength, defaultAllocated);
-    defaultAllocated.bytes.set(bytes, defaultAllocated.offset)
+    defaultAllocated.bytes.set(bytes, defaultAllocated.len)
+}
+
+if ((ByteVec as any)._setInitializeVecCapacity) {
+    (ByteVec as any)._setInitializeVecCapacity(4)
+}
+
+const tryAssertVecChunksSize = (vec: ByteVec, value: number) => {
+    if ((vec as any)._chunksSize) {
+        expect((vec as any)._chunksSize()).to.eq(value);
+    }
 }
 
 describe('pushByte/pushBytes', () => {
-    it('(4) empty', async () => {
-        const vec = new ByteVec(4)
+    it('empty', async () => {
+        const vec = new ByteVec()
         expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([]))
     })
 
-    it('(4) pushByte [1]', async () => {
-        const vec = new ByteVec(4)
+    it('pushByte [1]', async () => {
+        const vec = new ByteVec()
         vec.pushByte(1)
         expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1]))
     })
 
-    it('(4) pushByte [1,2]', async () => {
-        const vec = new ByteVec(4)
+    it('pushByte [1,2]', async () => {
+        const vec = new ByteVec()
         vec.pushByte(1)
         vec.pushByte(2)
         expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1, 2]))
     })
 
-    it('(4) pushByte [1,2,3,4,5]', async () => {
-        const vec = new ByteVec(4)
+    it('pushByte [1,2,3,4,5]', async () => {
+        const vec = new ByteVec()
         vec.pushByte(1)
         vec.pushByte(2)
         vec.pushByte(3)
         vec.pushByte(4)
         vec.pushByte(5)
         expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1, 2, 3, 4, 5]))
+        tryAssertVecChunksSize(vec, 2)
     })
 
-    it('(4) pushBytes [1]', async () => {
-        const vec = new ByteVec(4)
+    it('pushBytes [1]', async () => {
+        const vec = new ByteVec()
         pushBytes(vec, new Uint8Array([1]))
         expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1]))
     })
 
-    it('(4) pushBytes [1,2]', async () => {
-        const vec = new ByteVec(4)
+    it('pushBytes [1,2]', async () => {
+        const vec = new ByteVec()
         pushBytes(vec, new Uint8Array([1, 2]))
         expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1, 2]))
     })
 
-    it('(4) pushBytes [1,2,3,4,5]', async () => {
-        const vec = new ByteVec(4)
+    it('pushBytes [1,2,3,4,5]', async () => {
+        const vec = new ByteVec()
         pushBytes(vec, new Uint8Array([1, 2, 3, 4, 5]))
         expect(vec.toBuffer(0)).to.equalBytes(new Uint8Array([1, 2, 3, 4, 5]))
     })
 })
 
 describe('move', () => {
-    it('(4) move backward', () => {
+    it('move backward', () => {
         const expected = new Uint8Array([1, 2, 3, 1, 2])
-        const vec = new ByteVec(4)
+        const vec = new ByteVec()
         pushBytes(vec, new Uint8Array([1, 2, 3, 4, 5]))
         vec.moveBackward(0, 3, 2)
         expect(vec.toBuffer(0)).to.equalBytes(expected)
+        tryAssertVecChunksSize(vec, 2)
     })
 })
 
 describe('snapshot', () => {
-    it('(4) snapshot/restore 1', () => {
+    it('snapshot/restore 1', () => {
         const expected = new Uint8Array([2, 3, 4, 5])
-        const vec = new ByteVec(4)
+        const vec = new ByteVec()
         pushBytes(vec, new Uint8Array([1, 2, 3]))
         const snapshot = vec.snapshot()
         expect(snapshot.len === 3)
-        expect(snapshot.bufferLen === 3)
+        expect(snapshot.chunkLen === 3)
         vec.pushByte(8)
         vec.pushByte(6)
         vec.restoreSnapshot(snapshot)
@@ -109,12 +121,11 @@ describe('fuzz', () => {
             return res
         }
 
-        const capcity = gen.integer({ min: 2, max: 40 })
         const opsLen = gen.integer({ min: 10, max: 100 })
         const ops: Array<Operation> = Array.from({ length: opsLen }).fill(0).map(_ => ({ type: gen.integer({ min: 0, max: 4 }) as OperationType }))
 
         it(`Bytevec FuzzTest [${seed}] ${caseNum + 1}`, async () => {
-            const vec = new ByteVec(capcity)
+            const vec = new ByteVec()
             const snapshots: ByteVecSnapshot[] = []
             const snapshotsForVerify: number[] = []
             let array = new Uint8Array()

@@ -13,5 +13,5 @@ export {
     Writer,
     protos,
     ByteVecSnapshot,
-    generateRandomLayers,
+    generateRandomLayers
 }

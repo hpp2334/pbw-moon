@@ -1,41 +1,34 @@
 import assert from 'assert'
 
-const EMPTY_BUFFER = new Uint8Array([])
-
-export interface IAllocated {
-    bytes: Uint8Array,
-    offset: number
-}
-
-interface InternalArray {
+export interface AllocatedChunk {
     bytes: Uint8Array
     len: number
 }
 
 export interface ByteVecSnapshot {
-    buffersIndex: number,
-    bufferLen: number,
+    chunksIndex: number,
+    chunkLen: number,
     len: number,
     nextCapacity: number,
 }
 
 export interface ByteVecIter {
-    _indexInArrayList: number,
-    _indexInArray: number,
+    _indexInChunkList: number,
+    _indexInChunk: number,
     _byte: number
-    _array: InternalArray
+    _chunk: AllocatedChunk
 }
 
 export function createInitialByteVecIter(): ByteVecIter {
     return {
-        _indexInArrayList: 0,
-        _indexInArray: 0,
+        _indexInChunkList: 0,
+        _indexInChunk: 0,
         _byte: 0,
-        _array: null as any
+        _chunk: null as any
     }
 }
 
-const _InitialChunkCapacity = 2048 // 2KB
+let _InitialChunkCapacity = 2048 // 2KB
 const _InitialChunkPoolLimit = 4;
 // use a pool to avoid create initial chunk frequently
 const _InitialChunkPool: Uint8Array[] = []
@@ -68,15 +61,15 @@ function allocateToBuffer(len: number): Uint8Array {
         _ToBufferChunk = new Uint8Array(_ToBufferChunkCapacity)
         _ToBufferOffset = 0
     }
-    const array = _ToBufferChunk.subarray(_ToBufferOffset, _ToBufferOffset + len)
+    const buffer = _ToBufferChunk.subarray(_ToBufferOffset, _ToBufferOffset + len)
     _ToBufferOffset += len
-    return array
+    return buffer
 }
 
 export class ByteVec {
-    private _buffers: Array<InternalArray> = [{ bytes: obtainInitialChunk(), len: 0 }]
-    private _freeBuffers: Array<InternalArray> = []
-    private _currentChunk: InternalArray = this._buffers[0]
+    private _chunks: Array<AllocatedChunk> = [{ bytes: obtainInitialChunk(), len: 0 }]
+    private _freeChunks: Array<AllocatedChunk> = []
+    private _currentChunk: AllocatedChunk = this._chunks[0]
     private _len = 0
     private _nextCapacity = _InitialChunkCapacity * 2;
 
@@ -86,23 +79,23 @@ export class ByteVec {
     constructor() { }
 
     public pushByte(value: number) {
-        assert(this._buffers.length > 0, "unexpected empty buffers in 'pushByte'")
+        assert(this._chunks.length > 0, "unexpected empty buffers in 'pushByte'")
 
         if (this._currentChunk.len === this._currentChunk.bytes.byteLength) {
-            this._allocateNewInternalArray()
+            this._allocateNewChunk()
         }
         this._len++
         this._currentChunk.bytes[this._currentChunk.len++] = value
-        assert(this._currentChunk === this._buffers[this._buffers.length - 1], 'current chunk is not the last chunk');
+        assert(this._currentChunk === this._chunks[this._chunks.length - 1], 'current chunk is not the last chunk');
     }
 
-    public allocate(len: number, allocated: IAllocated): void {
+    public allocate(len: number, allocated: AllocatedChunk): void {
         const currentChunkLeft = this._currentChunk.bytes.byteLength - this._currentChunk.len
 
         // If current chunk is enough, just allocate in it
         if (len <= currentChunkLeft) {
             allocated.bytes = this._currentChunk.bytes;
-            allocated.offset = this._currentChunk.len;
+            allocated.len = this._currentChunk.len;
 
             this._currentChunk.len += len;
             this._len += len;
@@ -114,14 +107,14 @@ export class ByteVec {
             this._nextCapacity = this._nextCapacity * 2
         }
         // now next chunk is enough, create it and allocate
-        this._allocateNewInternalArray()
+        this._allocateNewChunk()
 
         allocated.bytes = this._currentChunk.bytes;
-        allocated.offset = this._currentChunk.len;
+        allocated.len = this._currentChunk.len;
         this._currentChunk.len += len;
         this._len += len;
         assert(this._currentChunk.len <= this._currentChunk.bytes.byteLength, `currentChunk byteLength is ${this._currentChunk.bytes.byteLength}, but required length is ${this._currentChunk.len}`)
-        assert(this._currentChunk === this._buffers[this._buffers.length - 1], 'current chunk is not the last chunk')
+        assert(this._currentChunk === this._chunks[this._chunks.length - 1], 'current chunk is not the last chunk')
     }
 
     public len() {
@@ -130,10 +123,10 @@ export class ByteVec {
 
     public toBufferAndClear(startIndex: number): Uint8Array {
         const ret = this.toBuffer(startIndex)
-        assert(this._buffers.length > 0, "unexpected empty buffers in 'toBufferAndClear'")
-        freeInitialChunk(this._buffers[0].bytes)
-        this._buffers = []
-        this._freeBuffers = []
+        assert(this._chunks.length > 0, "unexpected empty buffers in 'toBufferAndClear'")
+        freeInitialChunk(this._chunks[0].bytes)
+        this._chunks = []
+        this._freeChunks = []
         return ret
     }
 
@@ -142,39 +135,39 @@ export class ByteVec {
         if (len == 0) {
             return new Uint8Array([])
         }
-        assert(this._buffers.length > 0, "unexpected empty buffers in 'toBuffer'")
+        assert(this._chunks.length > 0, "unexpected empty buffers in 'toBuffer'")
 
-        let startBuffersIndex = 0
+        let startChunksIndex = 0
         let startOffset = 0
         {
             let start = 0
-            while (startBuffersIndex < this._buffers.length) {
-                const array = this._buffers[startBuffersIndex]
-                const end = start + array.len
+            while (startChunksIndex < this._chunks.length) {
+                const chunk = this._chunks[startChunksIndex]
+                const end = start + chunk.len
 
                 if (startIndex < end) {
                     startOffset = startIndex - start
                     assert(startIndex >= start, `startIndex ${startIndex} is not greater or equal to start ${start}`)
                     break;
                 }
-                startBuffersIndex++
+                startChunksIndex++
                 start = end
             }
         }
 
-        assert(startBuffersIndex < this._buffers.length, `startBuffersIndex ${startBuffersIndex} invalid`)
+        assert(startChunksIndex < this._chunks.length, `startBuffersIndex ${startChunksIndex} invalid`)
 
         const ret = allocateToBuffer(len)
 
-        const startArray = this._buffers[startBuffersIndex]
+        const startArray = this._chunks[startChunksIndex]
         ret.set(startArray.bytes.subarray(startOffset, startArray.len))
         let offset = startArray.len - startOffset
 
-        for (let i = startBuffersIndex + 1; i < this._buffers.length; i++) {
-            const buf = this._buffers[i]
-            ret.set(buf.bytes.byteLength === buf.len ? buf.bytes : buf.bytes.subarray(0, buf.len), offset)
-            offset += buf.len
-            assert(buf.len > 0, `The length of array ${i} is zero`)
+        for (let i = startChunksIndex + 1; i < this._chunks.length; i++) {
+            const chunk = this._chunks[i]
+            ret.set(chunk.bytes.byteLength === chunk.len ? chunk.bytes : chunk.bytes.subarray(0, chunk.len), offset)
+            offset += chunk.len
+            assert(chunk.len > 0, `The length of chunk ${i} is zero`)
         }
         assert(offset === len, `offset ${offset} is not equal required len ${len}`)
         return ret
@@ -182,8 +175,8 @@ export class ByteVec {
 
     public snapshot(): ByteVecSnapshot {
         return {
-            buffersIndex: this._buffers.length - 1,
-            bufferLen: this._currentChunk.len,
+            chunksIndex: this._chunks.length - 1,
+            chunkLen: this._currentChunk.len,
             len: this._len,
             nextCapacity: this._nextCapacity,
         }
@@ -191,24 +184,24 @@ export class ByteVec {
 
     public snapshotEmpty(): ByteVecSnapshot {
         return {
-            buffersIndex: 0,
-            bufferLen: 0,
+            chunksIndex: 0,
+            chunkLen: 0,
             len: 0,
             nextCapacity: _InitialChunkCapacity * 2
         }
     }
 
     public restoreSnapshot(snapshot: ByteVecSnapshot) {
-        while (this._buffers.length - 1 > snapshot.buffersIndex) {
-            const array = this._buffers.pop()!
-            this._freeBuffers.push(array)
+        while (this._chunks.length - 1 > snapshot.chunksIndex) {
+            const chunk = this._chunks.pop()!
+            this._freeChunks.push(chunk)
         }
-        this._currentChunk = this._buffers[this._buffers.length - 1]
-        this._currentChunk.len = snapshot.bufferLen
+        this._currentChunk = this._chunks[this._chunks.length - 1]
+        this._currentChunk.len = snapshot.chunkLen
         this._len = snapshot.len
         this._nextCapacity = snapshot.nextCapacity
 
-        assert(this._buffers.length > 0, "unexpected empty buffers by 'restoreSnapshot'")
+        assert(this._chunks.length > 0, "unexpected empty buffers by 'restoreSnapshot'")
     }
 
     public moveBackward(from: number, to: number, len: number) {
@@ -225,7 +218,7 @@ export class ByteVec {
 
         let left = len
         while (left > 0) {
-            if (fromRbeginIter._indexInArray === 0 || toRbeginIter._indexInArray === 0) {
+            if (fromRbeginIter._indexInChunk === 0 || toRbeginIter._indexInChunk === 0) {
                 this.writeByteAtIter(toRbeginIter, fromRbeginIter._byte)
                 left--;
                 if (left > 0) {
@@ -233,13 +226,13 @@ export class ByteVec {
                     this._backwardIter(toRbeginIter)
                 }
             } else {
-                const toMoveFoward = Math.min(toRbeginIter._indexInArray, fromRbeginIter._indexInArray, left)
-                toRbeginIter._array.bytes.set(fromRbeginIter._array.bytes.subarray(fromRbeginIter._indexInArray - toMoveFoward + 1, fromRbeginIter._indexInArray + 1), toRbeginIter._indexInArray - toMoveFoward + 1)
+                const toMoveFoward = Math.min(toRbeginIter._indexInChunk, fromRbeginIter._indexInChunk, left)
+                toRbeginIter._chunk.bytes.set(fromRbeginIter._chunk.bytes.subarray(fromRbeginIter._indexInChunk - toMoveFoward + 1, fromRbeginIter._indexInChunk + 1), toRbeginIter._indexInChunk - toMoveFoward + 1)
 
-                fromRbeginIter._indexInArray -= toMoveFoward;
-                fromRbeginIter._byte = fromRbeginIter._array.bytes[fromRbeginIter._indexInArray]
-                toRbeginIter._indexInArray -= toMoveFoward;
-                toRbeginIter._byte = toRbeginIter._array.bytes[fromRbeginIter._indexInArray]
+                fromRbeginIter._indexInChunk -= toMoveFoward;
+                fromRbeginIter._byte = fromRbeginIter._chunk.bytes[fromRbeginIter._indexInChunk]
+                toRbeginIter._indexInChunk -= toMoveFoward;
+                toRbeginIter._byte = toRbeginIter._chunk.bytes[fromRbeginIter._indexInChunk]
                 left -= toMoveFoward;
             }
         }
@@ -247,16 +240,16 @@ export class ByteVec {
 
     public getIter(index: number, iter: ByteVecIter) {
         let start = 0
-        for (let i = 0; i < this._buffers.length; i++) {
-            const array = this._buffers[i]
-            const end = start + array.len
+        for (let i = 0; i < this._chunks.length; i++) {
+            const chunk = this._chunks[i]
+            const end = start + chunk.len
 
             if (index < end) {
                 assert(index >= start, `[getIter] index ${index} is not greater or equal to start ${start}`)
-                iter._indexInArrayList = i
-                iter._indexInArray = index - start
-                iter._array = array
-                iter._byte = array.bytes[index - start]
+                iter._indexInChunkList = i
+                iter._indexInChunk = index - start
+                iter._chunk = chunk
+                iter._byte = chunk.bytes[index - start]
                 return
             }
             start = end
@@ -265,56 +258,66 @@ export class ByteVec {
     }
 
     public fowardIter(iter: ByteVecIter) {
-        assert(iter._array.len > 0, `[fowardIter] array len is 0`)
-        if (iter._indexInArray === iter._array.len - 1) {
-            iter._indexInArrayList++
-            iter._indexInArray = 0
-            iter._array = this._buffers[iter._indexInArrayList]
-            assert(Boolean(iter._array), `[fowardIter] array is null, indexInArrayList = ${iter._indexInArrayList}`)
-            iter._byte = iter._array.bytes[iter._indexInArray]
+        assert(iter._chunk.len > 0, `[fowardIter] chunk len is 0`)
+        if (iter._indexInChunk === iter._chunk.len - 1) {
+            iter._indexInChunkList++
+            iter._indexInChunk = 0
+            iter._chunk = this._chunks[iter._indexInChunkList]
+            assert(Boolean(iter._chunk), `[fowardIter] chunk is null, indexInArrayList = ${iter._indexInChunkList}`)
+            iter._byte = iter._chunk.bytes[iter._indexInChunk]
         } else {
-            iter._indexInArray++
-            iter._byte = iter._array.bytes[iter._indexInArray]
+            iter._indexInChunk++
+            iter._byte = iter._chunk.bytes[iter._indexInChunk]
         }
     }
 
     private _backwardIter(iter: ByteVecIter) {
-        assert(iter._array.len > 0, `[backwardIter] array len is 0`)
-        if (iter._indexInArray === 0) {
-            iter._indexInArrayList--
-            iter._array = this._buffers[iter._indexInArrayList]
-            assert(Boolean(iter._array), `[backwardIter] array is null, indexInArrayList = ${iter._indexInArrayList}`)
-            assert(iter._array.len > 0, `[backwardIter] array len is 0, indexInArrayList = ${iter._indexInArrayList}`)
-            iter._indexInArray = iter._array.len - 1
-            iter._byte = iter._array.bytes[iter._indexInArray]
+        assert(iter._chunk.len > 0, `[backwardIter] chunk len is 0`)
+        if (iter._indexInChunk === 0) {
+            iter._indexInChunkList--
+            iter._chunk = this._chunks[iter._indexInChunkList]
+            assert(Boolean(iter._chunk), `[backwardIter] chunk is null, indexInArrayList = ${iter._indexInChunkList}`)
+            assert(iter._chunk.len > 0, `[backwardIter] chunk len is 0, indexInArrayList = ${iter._indexInChunkList}`)
+            iter._indexInChunk = iter._chunk.len - 1
+            iter._byte = iter._chunk.bytes[iter._indexInChunk]
         } else {
-            iter._indexInArray--
-            iter._byte = iter._array.bytes[iter._indexInArray]
+            iter._indexInChunk--
+            iter._byte = iter._chunk.bytes[iter._indexInChunk]
         }
     }
 
     public writeByteAtIter(iter: ByteVecIter, byte: number) {
-        iter._array.bytes[iter._indexInArray] = byte
+        iter._chunk.bytes[iter._indexInChunk] = byte
     }
 
-    private _allocateNewInternalArray() {
-        while (this._freeBuffers.length) {
-            const array = this._freeBuffers.pop()!
-            if (array.bytes.byteLength === this._nextCapacity) {
-                array.len = 0
-                this._buffers.push(array)
-                this._currentChunk = array
+    private _allocateNewChunk() {
+        while (this._freeChunks.length) {
+            const chunk = this._freeChunks.pop()!
+            if (chunk.bytes.byteLength === this._nextCapacity) {
+                chunk.len = 0
+                this._chunks.push(chunk)
+                this._currentChunk = chunk
                 this._nextCapacity = 2 * this._nextCapacity;
                 return;
             }
         }
 
-        const array: InternalArray = {
+        const chunk: AllocatedChunk = {
             bytes: new Uint8Array(this._nextCapacity),
             len: 0,
         }
-        this._buffers.push(array)
-        this._currentChunk = array
+        this._chunks.push(chunk)
+        this._currentChunk = chunk
         this._nextCapacity = 2 * this._nextCapacity;
     }
 }
+
+assert((() => {
+    (ByteVec as any).prototype._chunksSize = function () {
+        return (this as any)._chunks.length
+    };
+    (ByteVec as any)._setInitializeVecCapacity = function (value: number) {
+        _InitialChunkCapacity = value
+    };
+    return true;
+})())

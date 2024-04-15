@@ -4,7 +4,7 @@ import { isString } from "./utils"
 import pbFloat from '@protobufjs/float'
 import pbBase64 from '@protobufjs/base64'
 import pbUtf8 from '@protobufjs/utf8'
-import { ByteVec, ByteVecIter, ByteVecSnapshot, IAllocated, createInitialByteVecIter } from "./byte-vec"
+import { ByteVec, ByteVecIter, ByteVecSnapshot, AllocatedChunk, createInitialByteVecIter } from "./byte-vec"
 import { IIntoLongBits, LongBits } from "./longbits"
 
 const GUESS_VARINT_LEN_FOR_LDELIM = 1
@@ -22,9 +22,9 @@ export class Writer {
     private _vec: ByteVec = new ByteVec()
     private _snapshots: ByteVecSnapshot[] = []
     private _emptySnapshot: ByteVecSnapshot
-    private _vecAllocated: IAllocated = {
+    private _vecAllocated: AllocatedChunk = {
         bytes: new Uint8Array([]),
-        offset: 0,
+        len: 0,
     }
     private _iter1: ByteVecIter = createInitialByteVecIter()
 
@@ -114,14 +114,14 @@ export class Writer {
     // Writes a float (32 bit).
     public float(value: number) {
         this._vec.allocate(4, this._vecAllocated)
-        pbFloat.writeFloatLE(value, this._vecAllocated.bytes, this._vecAllocated.offset)
+        pbFloat.writeFloatLE(value, this._vecAllocated.bytes, this._vecAllocated.len)
         return this
     }
 
     // Writes a double (64 bit float).
     public double(value: number) {
         this._vec.allocate(8, this._vecAllocated)
-        pbFloat.writeDoubleLE(value, this._vecAllocated.bytes, this._vecAllocated.offset)
+        pbFloat.writeDoubleLE(value, this._vecAllocated.bytes, this._vecAllocated.len)
         return this
     }
 
@@ -136,13 +136,13 @@ export class Writer {
             const len = pbBase64.length(value)
             this._vec.allocate(len, this._vecAllocated)
             this.uint32(len)
-            pbBase64.decode(value, this._vecAllocated.bytes, this._vecAllocated.offset)
+            pbBase64.decode(value, this._vecAllocated.bytes, this._vecAllocated.len)
             return this
         }
         this.uint32(len)
         this._vec.allocate(len, this._vecAllocated)
         // copy bytes
-        this._vecAllocated.bytes.set(value, this._vecAllocated.offset)
+        this._vecAllocated.bytes.set(value, this._vecAllocated.len)
         return this
     }
 
@@ -154,7 +154,7 @@ export class Writer {
         } else {
             this.uint32(len)
             this._vec.allocate(len, this._vecAllocated)
-            pbUtf8.write(value, this._vecAllocated.bytes, this._vecAllocated.offset)
+            pbUtf8.write(value, this._vecAllocated.bytes, this._vecAllocated.len)
         }
         return this
     }
