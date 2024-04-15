@@ -17,11 +17,21 @@ jobs:
           pnpx playwright install-deps
           pnpx playwright install
           pnpm run build:prod
-      - name: Run unit tests & Fuzz tests
-        run: pnpm run test:units
+      - name: Run build & tests (Testing)
+        run: |
+          pnpm run build
+          pnpm run test:units
         env:
           TEST_WEBKIT: 1
-      - name: Run conformance tests
+      - name: Run conformance tests (Testing)
+        run: pnpm run test:conformance
+      - name: Run build & tests (Production)
+        run: |
+          pnpm run build:prod
+          pnpm run test:units
+        env:
+          TEST_WEBKIT: 1
+      - name: Run conformance tests (Production)
         run: pnpm run test:conformance
       - uses: actions/upload-artifact@master
         with:
