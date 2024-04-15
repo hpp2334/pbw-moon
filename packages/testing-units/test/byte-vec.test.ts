@@ -178,6 +178,11 @@ describe('fuzz', () => {
                     const received = vec.toBuffer(i)
 
                     expect(received, `[${opCount}] operation ${OperationType[type]}, verify i = ${i}`).to.equalBytes(expected)
+
+                    // make received dirty
+                    for (let i = 0; i < received.length; i++) {
+                        received[i] = gen.integer({ min: 0, max: 255 })
+                    }
                 }
             }
         })

@@ -47,4 +47,5 @@ message Layer {
     bool hasClippingMask = 15;
     Style style = 16;
     repeated Layer layers = 17;
+    bytes _binary = 18;
 }

@@ -1,12 +1,46 @@
 
 import * as protos from 'pbw-moon-testing-protos'
+import Long from 'long'
+import { Writer } from 'pbw-moon'
 
-export function generateRandomLayers(chance: Chance.Chance, opts: {
+function getWriter(useWriter: boolean) {
+    return useWriter ? new Writer() : undefined
+}
+
+function generateRandomText(chance: Chance.Chance, glyphCount: number, useWriter: boolean): protos.shapepackage.Text {
+    return protos.shapepackage.Text.create({
+        id: Long.fromBits(chance.integer({ min: -10000000, max: 100000000 }), chance.integer({ min: -10000000, max: 100000000 })),
+        text: chance.string({ length: 10 }),
+        position: {
+            x: chance.floating() * 1000,
+            y: chance.floating() * 1000,
+        },
+        size: {
+            width: chance.floating() * 1000,
+            height: chance.floating() * 1000,
+        },
+        glyphs: Array.from({ length: glyphCount }).fill(0).map(_ => protos.shapepackage.Glyph.create({
+            id: Long.fromBits(chance.integer({ min: -10000000, max: 100000000 }), chance.integer({ min: -10000000, max: 100000000 })),
+            scale: chance.floating() * 1000,
+            position: {
+                x: chance.floating() * 1000,
+                y: chance.floating() * 1000,
+            },
+            size: {
+                width: chance.floating() * 1000,
+                height: chance.floating() * 1000,
+            },
+            extraData: protos.shapepackage.Text.encode(generateRandomText(chance, 0, useWriter), getWriter(useWriter)).finish(),
+        }))
+    })
+}
+
+export function generateRandomLayers(chance: Chance.Chance, useWriter: boolean, opts: {
     layerCount: number,
     fillsCount: [number, number],
     /** 1 - 100 */
     link: number,
-}): protos.partialsketch.Layer {
+}): Uint8Array {
     if (opts.layerCount <= 0) {
         throw Error("layerCount is 0")
     }
@@ -25,6 +59,12 @@ export function generateRandomLayers(chance: Chance.Chance, opts: {
     }
 
     const generateLayer = (): protos.partialsketch.Layer => {
+        let bin: Uint8Array | null = null;
+        if (chance.integer({ min: 0, max: 4 }) === 0) {
+            const len = chance.integer({ min: 0, max: 10 })
+            bin = protos.shapepackage.Text.encode(generateRandomText(chance, len, useWriter), getWriter(useWriter)).finish()
+        }
+
         return protos.partialsketch.Layer.create({
             doObjectID: chance.string({ length: 36 }),
             _class: chance.address(),
@@ -52,6 +92,7 @@ export function generateRandomLayers(chance: Chance.Chance, opts: {
                 fills: Array.from({ length: chance.integer({ min: opts.fillsCount[0], max: opts.fillsCount[1] }) })
                     .fill(0).map(_ => generateFill())
             },
+            _binary: bin,
             layers: []
         })
     }
@@ -67,5 +108,5 @@ export function generateRandomLayers(chance: Chance.Chance, opts: {
             layers[0].layers.push(layers[i])
         }
     }
-    return layers[0]
+    return protos.partialsketch.Layer.encode(layers[0], getWriter(useWriter)).finish()
 }

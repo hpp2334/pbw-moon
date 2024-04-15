@@ -68,7 +68,9 @@ function allocateToBuffer(len: number): Uint8Array {
         _ToBufferChunk = new Uint8Array(_ToBufferChunkCapacity)
         _ToBufferOffset = 0
     }
-    return _ToBufferChunk.subarray(_ToBufferOffset, _ToBufferOffset + len)
+    const array = _ToBufferChunk.subarray(_ToBufferOffset, _ToBufferOffset + len)
+    _ToBufferOffset += len
+    return array
 }
 
 export class ByteVec {

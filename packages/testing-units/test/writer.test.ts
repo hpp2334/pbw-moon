@@ -69,18 +69,19 @@ it('Text 1', async () => {
 describe('fuzz', () => {
     for (let caseNum = 0; caseNum < 100; caseNum++) {
         const seed = Date.now() + caseNum
-        const gen = new chance(seed)
 
-        const p = generateRandomLayers(gen, {
-            layerCount: gen.integer({ min: 1, max: 1000, }),
-            fillsCount: [0, 10],
-            link: 80,
-        })
+        const p = (useWriter: boolean) => {
+            const gen = new chance(seed)
+            return generateRandomLayers(gen, useWriter, {
+                layerCount: gen.integer({ min: 1, max: 1000, }),
+                fillsCount: [0, 10],
+                link: 80,
+            })
+        }
 
         it(`Writer FuzzTest [${seed}] ${caseNum + 1}`, () => {
-            const Message = protos.partialsketch.Layer;
-            const expected = Message.encode(p).finish()
-            const received = Message.encode(p, new Writer()).finish()
+            const expected = p(false)
+            const received = p(true)
             expect(expected.length).to.greaterThan(0)
             expect(isEqual(received, expected)).to.be.true
         })
