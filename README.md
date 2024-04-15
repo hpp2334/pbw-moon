@@ -38,20 +38,24 @@ Protobuf has [conformance tests](https://github.com/protocolbuffers/protobuf/tre
 Benchmark
 ----
 
-Currently, on the browser, encoding small objects has similar performance compared to official writer, but encoding large objects (30 MB) is faster. Run `pnpm dev` in `testing-performance` package, and click "Benchmark Suite" to see the result.
+Currently, encoding small objects is slower than the official writer (in Node.js), but encoding large objects (30 MB) is faster. Run `pnpm benchmark` to see the result.
 
 ```log
-benchmarking encoding - bench performance ...
-[offical] protobuf.js (static) x 1,242,859 ops/sec ±1.62% (65 runs sampled)
-[pbw-moon] protobuf.js (static) x 1,480,685 ops/sec ±0.36% (66 runs sampled)
-[pbw-moon] protobuf.js (static) was fastest
-[offical] protobuf.js (static) was 17.1% ops/sec slower (factor 1.2)
+[Offical] encode bench
+time 0.519778804987669 s
+heapTotal increase 10.75 MB
 
-benchmarking encoding - partialSketch performance ...
-[offical] protobuf.js (static) x 0.80 ops/sec ±9.45% (6 runs sampled)
-[pbw-moon] protobuf.js (static) x 3.51 ops/sec ±3.34% (13 runs sampled)
-[pbw-moon] protobuf.js (static) was fastest
-[offical] protobuf.js (static) was 78.6% ops/sec slower (factor 4.7)
+[pbw-moon] encode bench
+time 1.882222745001316 s
+heapTotal increase 0 MB
+
+[Offical] encode partialSketch
+time 0.9394721720218658 s
+heapTotal increase 318.75 MB
+
+[pbw-moon] encode partialSketch
+time 0.30044887098670003 s
+heapTotal increase 8.25 MB
 ```
 
 License

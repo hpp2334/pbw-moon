@@ -1,0 +1,19 @@
+{
+  "name": "pbw-moon-testing-bench",
+  "version": "0.0.0",
+  "description": "",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "prof": "tsx ./prof.ts",
+    "benchmark": "tsx ./index.ts"
+  },
+  "devDependencies": {
+    "@types/benchmark": "^2.1.5",
+    "@types/node": "^20.12.7",
+    "pbw-moon": "workspace:*",
+    "pbw-moon-testing-protos": "workspace:*",
+    "protobufjs": "^7.2.6",
+    "tsx": "^4.7.2"
+  }
+}
