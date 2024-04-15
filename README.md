@@ -38,7 +38,45 @@ Protobuf has [conformance tests](https://github.com/protocolbuffers/protobuf/tre
 Benchmark
 ----
 
-Currently, encoding small objects is slower than the official writer (in Node.js), but encoding large objects (30 MB) is faster. Run `pnpm benchmark` to see the result.
+### Browser
+
+Encoding small objects has similar performance, and encoding large objects is faster. Run `pnpm dev` in package [pbw-moon-testing-browser-bench](./packages/testing-browser-bench) and click "Benchmark Suite" to see the result.
+
+Chrome 123.0 on Windows
+
+```log
+benchmarking encoding - bench performance ...
+[offical] protobuf.js (static) x 1,184,402 ops/sec ±1.18% (64 runs sampled)
+[pbw-moon] protobuf.js (static) x 1,317,833 ops/sec ±1.09% (66 runs sampled)
+[pbw-moon] protobuf.js (static) was fastest
+[offical] protobuf.js (static) was 10.2% ops/sec slower (factor 1.1)
+
+benchmarking encoding - partialSketch performance ...
+[offical] protobuf.js (static) x 1.49 ops/sec ±8.62% (8 runs sampled)
+[pbw-moon] protobuf.js (static) x 5.30 ops/sec ±1.42% (18 runs sampled)
+[pbw-moon] protobuf.js (static) was fastest
+[offical] protobuf.js (static) was 73.7% ops/sec slower (factor 3.8)
+```
+
+Firefox 124.0.2 on Windows
+
+```log
+benchmarking encoding - bench performance ...
+[offical] protobuf.js (static) x 539,970 ops/sec ±3.31% (56 runs sampled)
+[pbw-moon] protobuf.js (static) x 463,409 ops/sec ±2.45% (56 runs sampled)
+[offical] protobuf.js (static) was fastest
+[pbw-moon] protobuf.js (static) was 13.5% ops/sec slower (factor 1.2)
+
+benchmarking encoding - partialSketch performance ...
+[offical] protobuf.js (static) x 1.69 ops/sec ±10.17% (9 runs sampled)
+[pbw-moon] protobuf.js (static) x 3.31 ops/sec ±6.42% (13 runs sampled)
+[pbw-moon] protobuf.js (static) was fastest
+[offical] protobuf.js (static) was 50.7% ops/sec slower (factor 2.0)
+```
+
+### NodeJS
+
+Encoding small objects is slower than the official writer (in Node.js), but encoding large objects (30 MB) is faster. Run `pnpm benchmark` to see the result.
 
 ```log
 [Offical] encode bench
